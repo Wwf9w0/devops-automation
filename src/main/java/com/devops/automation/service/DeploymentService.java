@@ -5,7 +5,6 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -43,12 +42,13 @@ public class DeploymentService {
             Map<String, Object> config = yaml.load(inputStream);
 
             Map<String, Object> defaultConfig = getDefaultConfig();
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            config = mergeConfigs(defaultConfig, config);
+
+            System.out.println("Configuration loaded: " + config);
+            return config;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return null;
     }
 
     private Map<String, Object> getDefaultConfig() {
@@ -60,5 +60,45 @@ public class DeploymentService {
         defaultConfig.put("kubernetes.deploymentName", "spring-boot-app");
         defaultConfig.put("kubernetes.serviceName", "spring-boot-service");
         return defaultConfig;
+    }
+
+    private Map<String, Object> mergeConfigs(Map<String, Object> defaultConfig, Map<String, Object> userConfig) {
+        for (String key : defaultConfig.keySet()) {
+            userConfig.putIfAbsent(key, defaultConfig.get(key));
+        }
+        return userConfig;
+    }
+
+
+    private void deployToKubernetes(String projectName, Map<String, Object> config) {
+        String imageName = (String) config.get("docker.imageName");
+        String buildContext = (String) config.get("docker.buildContext");
+        String buildCommand = "docker build -t " + imageName + " " + buildContext;
+        executeCommand(buildCommand, "Failed to build Docker image.");
+
+        String pushCommand = "docker push " + imageName;
+        executeCommand(pushCommand, "Failed to push Docker image.");
+
+        String deploymentName = (String) config.get("kubernetes.deploymentName");
+        String namespace = (String) config.get("kubernetes.namespace");
+        String applyCommand = "kubectl apply -f /tmp/" + projectName + "/k8s/deployment.yml -n " + namespace;
+        executeCommand(applyCommand, "Failed to apply Kubernetes deployment.");
+
+        System.out.println("Project " + deploymentName + "successfully deploy to Kubernetes in namespace " + namespace);
+    }
+
+    private void executeCommand(String command, String errorMessage) {
+        try {
+            Process process = Runtime.getRuntime().exec(command);
+            process.waitFor();
+
+            if (process.exitValue() != 0) {
+                throw new RuntimeException(errorMessage);
+            }
+
+            System.out.println("Command executed successfully: " + command);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
