@@ -13,7 +13,6 @@ import java.util.Map;
 @Service
 public class DeploymentService {
 
-
     public String deployFromGithub(String githubUrl) {
         try {
             String projectName = cloneGitHubRepository(githubUrl);
