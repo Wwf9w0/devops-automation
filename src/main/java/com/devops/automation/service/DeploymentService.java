@@ -14,17 +14,23 @@ import java.util.Map;
 public class DeploymentService {
 
 
+    public String deployFromGithub(String githubUrl) {
+        try {
+            String projectName = cloneGitHubRepository(githubUrl);
+            Map<String, Object> config = readConfigurationFile(projectName);
+            deployToKubernetes(projectName, config);
+            return "Deployment successful for project: " + projectName;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Deployment failed: " + e.getMessage();
+        }
+    }
+
+
     private String cloneGitHubRepository(String githubUrl) {
         String projectName = githubUrl.substring(githubUrl.lastIndexOf("/") + 1, githubUrl.length() - 4);
         String cloneCommand = "git clone " + githubUrl + " /tmp" + projectName;
-
-        try {
-            Process process = Runtime.getRuntime().exec(cloneCommand);
-            process.waitFor();
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
+        executeCommand(cloneCommand, "Failed to clone repository.");
         System.out.println("Repository cloned successfully: " + projectName);
         return projectName;
     }
@@ -40,10 +46,8 @@ public class DeploymentService {
         try (InputStream inputStream = new FileInputStream(configFile)) {
             Yaml yaml = new Yaml();
             Map<String, Object> config = yaml.load(inputStream);
-
             Map<String, Object> defaultConfig = getDefaultConfig();
             config = mergeConfigs(defaultConfig, config);
-
             System.out.println("Configuration loaded: " + config);
             return config;
         } catch (IOException e) {
@@ -91,11 +95,9 @@ public class DeploymentService {
         try {
             Process process = Runtime.getRuntime().exec(command);
             process.waitFor();
-
             if (process.exitValue() != 0) {
                 throw new RuntimeException(errorMessage);
             }
-
             System.out.println("Command executed successfully: " + command);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
