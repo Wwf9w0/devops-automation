@@ -1,4 +1,4 @@
-package com.devops.automation.service;
+package com.devops.automation.service.service;
 
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;

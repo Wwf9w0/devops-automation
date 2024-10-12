@@ -1,4 +1,4 @@
-package com.devops.automation.service;
+package com.devops.automation.service.service;
 
 import com.devops.automation.service.model.AuthResponse;
 import com.devops.automation.service.utils.JwtUtil;

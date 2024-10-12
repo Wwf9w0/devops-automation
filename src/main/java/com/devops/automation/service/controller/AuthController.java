@@ -1,6 +1,6 @@
 package com.devops.automation.service.controller;
 
-import com.devops.automation.service.AuthService;
+import com.devops.automation.service.service.AuthService;
 import com.devops.automation.service.model.AuthRequest;
 import com.devops.automation.service.model.AuthResponse;
 import lombok.RequiredArgsConstructor;

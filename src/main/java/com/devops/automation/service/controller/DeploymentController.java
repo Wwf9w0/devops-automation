@@ -1,5 +1,6 @@
-package com.devops.automation.service;
+package com.devops.automation.service.controller;
 
+import com.devops.automation.service.service.DeploymentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
